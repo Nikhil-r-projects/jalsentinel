@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import ml_model
 import dl_model
@@ -10,8 +10,23 @@ import os
 import numpy as np
 from hub_network import HubNetworkSimulation
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DASHBOARD_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "dashboard"))
+
+app = Flask(__name__, static_folder=DASHBOARD_DIR, static_url_path="")
 CORS(app)
+
+@app.route('/', methods=['GET'])
+@app.route('/dashboard', methods=['GET'])
+def serve_dashboard():
+    index_file = os.path.join(DASHBOARD_DIR, 'index.html')
+    if os.path.exists(index_file):
+        return send_from_directory(DASHBOARD_DIR, 'index.html')
+    return jsonify({
+        "status": "online",
+        "service": "AquaIntel IoT & ML Server",
+        "endpoints": ["/latest", "/sensor-data", "/actuator-command", "/node-status", "/gov-status"]
+    }), 200
 
 sensor_buffer = DataBuffer(size=10)
 hub_sim = HubNetworkSimulation(num_hubs=25) # Initialize 25 simulated hubs
@@ -278,6 +293,27 @@ def gov_status():
 def simulate_event():
     result = hub_sim.trigger_simulation()
     return jsonify(result), 200
+
+@app.errorhandler(404)
+def handle_404(e):
+    req_path = request.path.lstrip('/')
+    candidate = os.path.join(DASHBOARD_DIR, req_path)
+    if req_path and os.path.isfile(candidate):
+        return send_from_directory(DASHBOARD_DIR, req_path)
+    return jsonify({
+        "error": "404 Not Found",
+        "requested_url": request.url,
+        "message": f"Route '{request.path}' was not found on the AquaIntel server.",
+        "valid_endpoints": {
+            "Dashboard": "http://127.0.0.1:5000/ [GET]",
+            "Latest Data": "http://127.0.0.1:5000/latest [GET]",
+            "Sensor Ingest": "http://127.0.0.1:5000/sensor-data [POST]",
+            "Actuator Poll": "http://127.0.0.1:5000/actuator-command [GET]",
+            "Node Status": "http://127.0.0.1:5000/node-status [GET]",
+            "Gov Network Status": "http://127.0.0.1:5000/gov-status [GET]",
+            "Manual Override": "http://127.0.0.1:5000/manual-override [GET, POST]"
+        }
+    }), 404
 
 if __name__ == '__main__':
     ml_model.load_models()

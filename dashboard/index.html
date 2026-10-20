@@ -6,14 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AquaIntel | Smart Wastewater Monitoring System</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Leaflet Map CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="style.css?v=2.0">
+    <link rel="stylesheet" href="style.css?v=2.1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪼</text></svg>">
 </head>
 
 <body>
@@ -23,53 +23,72 @@
         <div class="spinner-line"></div>
     </div>
 
-    <div class="app-container">
+    <div class="spatial-window-chassis">
 
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="brand">
-                <i class="fa-solid fa-water fa-2x brand-icon"></i>
-                <h2>AquaIntel</h2>
+        <!-- Left Vertical Floating Circular Dock -->
+        <aside class="spatial-dock">
+            <div class="spatial-dock-top">
+                <div class="spatial-dock-brand" title="AquaIntel">
+                    <i class="fa-solid fa-water"></i>
+                </div>
+                <a href="#" class="spatial-dock-item active nav-item" data-target="view-dashboard" title="Dashboard">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </a>
+                <a href="#" class="spatial-dock-item nav-item" data-target="view-nodes" title="Hardware Nodes">
+                    <i class="fa-solid fa-network-wired"></i>
+                </a>
+                <a href="#" class="spatial-dock-item nav-item" data-target="view-actuation" title="Actuation & Treatments">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </a>
+                <a href="#" class="spatial-dock-item nav-item" data-target="view-gov" title="Spatial GIS Map">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </a>
+                <a href="#" class="spatial-dock-item nav-item" data-target="view-ai-models" title="AI & Inference">
+                    <i class="fa-solid fa-brain"></i>
+                </a>
+                <a href="#" class="spatial-dock-item nav-item" data-target="view-settings" title="System Settings">
+                    <i class="fa-solid fa-sliders"></i>
+                </a>
             </div>
-            <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-target="view-dashboard"><i class="fa-solid fa-chart-pie"></i>
-                    Dashboard</a>
-                <a href="#" class="nav-item" data-target="view-nodes"><i class="fa-solid fa-network-wired"></i>
-                    Nodes</a>
-                <a href="#" class="nav-item" data-target="view-actuation"><i
-                        class="fa-solid fa-bolt-lightning text-slate"></i> Actuation</a>
-                <a href="#" class="nav-item" data-target="view-gov"><i
-                        class="fa-solid fa-building-columns text-green"></i> Gov Coordination</a>
-                <a href="#" class="nav-item" data-target="view-ai-models"><i class="fa-solid fa-brain"></i> AI
-                    Models</a>
-                <a href="#" class="nav-item" data-target="view-settings"><i class="fa-solid fa-sliders"></i>
-                    Settings</a>
-            </nav>
-            <div class="system-status online">
-                <div class="pulse-indicator"></div>
-                <span id="global-status-text">System Online</span>
+            <div class="spatial-dock-bottom">
+                <button class="spatial-dock-item" id="btn-theme-toggle" title="Toggle Theme">
+                    <i id="theme-icon" class="fa-solid fa-sun"></i>
+                </button>
+                <button class="spatial-dock-item" id="btn-system-power" title="System Status: Online">
+                    <i class="fa-solid fa-power-off text-green"></i>
+                </button>
             </div>
         </aside>
 
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <header class="top-header">
-                <div class="header-left">
-                    <h1 id="page-title">Real-time Analytics</h1>
-                    <p id="page-subtitle">Live telemetry from Jellyfish Sensor Node 01</p>
+        <!-- Spatial Main Scrollable Body -->
+        <div class="spatial-body-container">
+
+            <!-- Top Navigation Bar -->
+            <header class="spatial-top-bar">
+                <div class="spatial-nav-pills">
+                    <div class="spatial-dock-brand" style="width:34px; height:34px; font-size:1rem; margin-bottom:0; border-radius:10px;">
+                        <i class="fa-solid fa-water"></i>
+                    </div>
+                    <button class="nav-pill" id="btn-pill-diagnose">Diagnose</button>
+                    <button class="nav-pill active" id="btn-pill-probe"><span class="blue-dot"></span> My Probe (HUB-100)</button>
                 </div>
-                <div class="header-right">
-                    <div class="timestamp" id="last-updated">Updating...</div>
-                    <button class="btn btn-primary" id="btn-export"><i class="fa-solid fa-download"></i> Export
-                        Report</button>
-                    <!-- Theme Toggle (Upgrade 6) -->
-                    <button id="btn-theme-toggle" class="btn"
-                        style="background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.6rem; aspect-ratio: 1/1; justify-content: center; display: flex; align-items: center;">
-                        <i id="theme-icon" class="fa-solid fa-sun"></i>
+
+                <div class="spatial-search-pill">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search sensor, effluent, catchment hub..." id="spatial-search-input">
+                </div>
+
+                <div class="spatial-top-actions">
+                    <button class="btn-blue-circle" id="btn-quick-action" title="Deploy Actuation Treatment">
+                        <i class="fa-solid fa-phone-volume"></i>
                     </button>
-                    <div class="profile-avatar">
+                    <div class="spatial-bell-btn" id="btn-notifications" title="System Alerts">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="bell-badge"></span>
+                    </div>
+                    <div class="spatial-user-avatar" title="Station Commander: Dr. Nidhi">
                         <i class="fa-solid fa-user-astronaut"></i>
-                        <div class="avatar-online-dot"></div>
+                        <span class="avatar-dot"></span>
                     </div>
                 </div>
             </header>
@@ -78,22 +97,243 @@
 
                 <!-- DASHBOARD VIEW -->
                 <div id="view-dashboard" class="view-section active">
-                    <div class="dashboard-grid">
+                    
+                    <div class="spatial-dashboard-stage">
 
-                        <!-- Dashboard Banner -->
-                        <div class="glass-card full-width"
-                            style="margin-bottom: 2rem; padding: 0; overflow: hidden; height: 160px; position: relative;">
-                            <img src="assets/banner.png" alt="AI Neural Data Banner"
-                                style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6; mix-blend-mode: screen;">
-                            <div style="position: absolute; bottom: 1.5rem; left: 1.75rem;">
-                                <h2
-                                    style="font-size: 1.75rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); font-weight: 600; letter-spacing: -0.5px;">
-                                    AquaIntel — The Jellyfish System</h2>
-                                <p
-                                    style="color: var(--text-secondary); text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-weight: 500;">
-                                    Real-time inference and hardware orchestration active.</p>
+                        <!-- Main 3-Column Core Grid -->
+                        <div class="spatial-core-grid">
+
+                            <!-- Column 1: Hero Digital Twin Showcase -->
+                            <div class="spatial-hero-twin-col">
+                                <div class="spatial-hero-title-block">
+                                    <h1>Overview<br><span>Conditions</span></h1>
+                                </div>
+
+                                <div class="spatial-model-stage">
+                                    <div class="model-radar-pedestal">
+                                        <div class="pedestal-ring-1"></div>
+                                        <div class="pedestal-ring-2"></div>
+                                        <div class="pedestal-ring-3"></div>
+                                    </div>
+
+                                    <img src="assets/jellyfish_probe.jpg" alt="Biomimetic Jellyfish Water Probe" class="spatial-probe-render">
+
+                                    <!-- Hotspot Interactive Pins -->
+                                    <div class="spatial-hotspot-pin pin-bell-dome" title="Biomimetic Pink Bell Dome (ESP32 Gateway)"></div>
+                                    <div class="spatial-hotspot-pin pin-sensor-stem-left" title="Submerged Spectrometry Electrodes"></div>
+                                    <div class="spatial-hotspot-pin pin-water-surface" title="Water Interface & Optical Density Sensor"></div>
+
+                                    <!-- Floating Frosted Telemetry Card Overlaid on Bottom-Left -->
+                                    <div class="spatial-floating-probe-card">
+                                        <div class="probe-card-header">
+                                            <i class="fa-solid fa-heart-pulse"></i>
+                                            <span>Turbidity Pulse</span>
+                                        </div>
+                                        <div class="probe-card-val">
+                                            <span id="hero-turbidity-val">3.20</span>
+                                            <small>NTU</small>
+                                        </div>
+                                        <div class="probe-card-wave">
+                                            <svg viewBox="0 0 100 24" style="width: 100%; height: 100%;">
+                                                <path d="M0,12 Q12,3 24,12 T48,12 T72,12 T96,12 L100,12" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Column 2: Center Diagnostics Grid (• My Probe Condition) -->
+                            <div class="spatial-diagnostics-col">
+                                <div class="spatial-section-header">
+                                    <span class="dot-blue"></span> My Probe Condition
+                                </div>
+
+                                <div class="spatial-diagnostics-grid">
+                                    <!-- Card 1: Turbidity -->
+                                    <div class="spatial-metric-card">
+                                        <div class="spatial-metric-top">
+                                            <div class="spatial-metric-meta">
+                                                <i class="fa-solid fa-droplet spatial-metric-icon text-cyan"></i>
+                                                <div>
+                                                    <div class="spatial-metric-title">Turbidity Status</div>
+                                                    <div class="spatial-metric-val"><span id="val-turb">3.20</span> <small style="font-size:0.7rem; color:#94a3b8;">NTU</small></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="metric-bars-viz">
+                                            <div class="eq-bar" style="height: 45%;"></div>
+                                            <div class="eq-bar active" style="height: 75%;"></div>
+                                            <div class="eq-bar" style="height: 55%;"></div>
+                                            <div class="eq-bar active" style="height: 85%;"></div>
+                                            <div class="eq-bar" style="height: 40%;"></div>
+                                            <div class="eq-bar active" style="height: 65%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 2: Effluent TDS (Glowing Blue Card Pill matching 120 bpm in reference image!) -->
+                                    <div class="spatial-metric-card spatial-blue-pill-card">
+                                        <div class="spatial-metric-top">
+                                            <div class="spatial-metric-meta">
+                                                <i class="fa-solid fa-heart-pulse spatial-metric-icon"></i>
+                                                <div>
+                                                    <div class="spatial-metric-title">Effluent TDS</div>
+                                                    <div class="spatial-metric-val"><span id="val-tds">185</span> <small style="font-size:0.7rem; color:rgba(255,255,255,0.85);">ppm</small></div>
+                                                </div>
+                                            </div>
+                                            <span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:12px; font-size:0.7rem; font-weight:700;">LIVE</span>
+                                        </div>
+                                        <div class="metric-wave-viz">
+                                            <svg viewBox="0 0 100 28" style="width: 100%; height: 100%;">
+                                                <path d="M0,14 Q10,4 20,14 T40,14 T60,6 T75,22 T85,14 L100,14" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 3: Chemical pH Balance -->
+                                    <div class="spatial-metric-card">
+                                        <div class="spatial-metric-top">
+                                            <div class="spatial-metric-meta">
+                                                <i class="fa-solid fa-chart-simple spatial-metric-icon text-indigo"></i>
+                                                <div>
+                                                    <div class="spatial-metric-title">Chemical pH Balance</div>
+                                                    <div class="spatial-metric-val"><span id="val-ph">7.20</span> <small style="font-size:0.7rem; color:#94a3b8;">pH</small></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="metric-wave-viz">
+                                            <svg viewBox="0 0 100 24" style="width: 100%; height: 100%;">
+                                                <path d="M0,12 Q20,2 40,12 T80,12 L100,12" fill="none" stroke="#818cf8" stroke-width="2.2" stroke-linecap="round"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 4: Water Temperature -->
+                                    <div class="spatial-metric-card">
+                                        <div class="spatial-metric-top">
+                                            <div class="spatial-metric-meta">
+                                                <i class="fa-solid fa-temperature-half spatial-metric-icon text-orange"></i>
+                                                <div>
+                                                    <div class="spatial-metric-title">Water Temperature</div>
+                                                    <div class="spatial-metric-val"><span id="val-temp">24.8</span> <small style="font-size:0.7rem; color:#94a3b8;">°C</small></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="metric-wave-viz">
+                                            <svg viewBox="0 0 100 24" style="width: 100%; height: 100%;">
+                                                <path d="M0,18 Q30,10 60,14 T100,8" fill="none" stroke="#fb923c" stroke-width="2.2" stroke-linecap="round"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Column 3: Right Operations & Schedule (• Catchment Schedule) -->
+                            <div class="spatial-schedule-col">
+                                <div class="spatial-section-header">
+                                    <span class="dot-blue"></span> Catchment Schedule
+                                </div>
+
+                                <div class="spatial-schedule-card">
+                                    <div class="schedule-header-row">
+                                        <i class="fa-regular fa-calendar-check"></i>
+                                        <div>
+                                            <div style="font-size:0.72rem; color:#94a3b8;">Next Inspection / Calibration</div>
+                                            <strong>Fri, 24 Oct 2026</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="date-switcher-pill">
+                                        <button class="date-nav-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                                        <span>20-October-26</span>
+                                        <button class="date-nav-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                                    </div>
+
+                                    <div class="schedule-operators-list">
+                                        <div class="operator-item">
+                                            <div class="operator-avatar" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">🪼</div>
+                                            <div class="operator-info">
+                                                <div class="operator-name">HUB-100 (Jellyfish Gateway)</div>
+                                                <div class="operator-role text-cyan font-mono" id="hero-node-ip">10.47.212.43 (Online)</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="operator-item">
+                                            <div class="operator-avatar" style="background: linear-gradient(135deg, #0284c7, #2563eb);"><i class="fa-solid fa-satellite-dish"></i></div>
+                                            <div class="operator-info">
+                                                <div class="operator-name">Regional Catchment Node #04</div>
+                                                <div class="operator-role text-green font-mono">Baseline Nominal</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="operator-item">
+                                            <div class="operator-avatar" style="background: linear-gradient(135deg, #475569, #334155);"><i class="fa-solid fa-pump-soap"></i></div>
+                                            <div class="operator-info">
+                                                <div class="operator-name">Actuator Neutralizer Unit</div>
+                                                <div class="operator-role text-slate font-mono">Standby Ready</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button class="btn-spatial-cta" id="btn-spatial-action">
+                                        <span>Simulate Contamination Event</span>
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Bottom Shelf: Horizontal Hardware Fleet (• Hardware Node Fleet) -->
+                        <div class="spatial-fleet-shelf">
+                            <div class="shelf-header-row">
+                                <div class="spatial-section-header" style="margin-bottom: 0;">
+                                    <span class="dot-blue"></span> Hardware Node Fleet
+                                </div>
+                                <div class="shelf-arrows">
+                                    <button class="shelf-arrow-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <button class="shelf-arrow-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="spatial-fleet-gallery">
+                                <!-- Capsule 1: Biomimetic Dome -->
+                                <div class="spatial-fleet-card" title="3D Printed Biomimetic Flotation Bell">
+                                    <div class="fleet-card-img-wrap">
+                                        <i class="fa-solid fa-shield-halved fleet-card-icon-render text-coral"></i>
+                                    </div>
+                                    <div class="fleet-card-label">Biomimetic Bell Dome</div>
+                                </div>
+
+                                <!-- Capsule 2: Jellyfish Probe (HUB-100) Active Highlighted Card! -->
+                                <div class="spatial-fleet-card active-fleet-node" id="btn-hero-focus-probe" title="Active Hardware Gateway Node">
+                                    <div class="fleet-card-img-wrap">
+                                        <img src="assets/jellyfish_probe.jpg" alt="Active Probe">
+                                    </div>
+                                    <div class="active-pill-badge">
+                                        <span>Jellyfish Node</span>
+                                        <span class="arrow-blue-sq"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                                    </div>
+                                </div>
+
+                                <!-- Capsule 3: Sensor Stems -->
+                                <div class="spatial-fleet-card" title="Submerged Multi-Parameter Electrodes">
+                                    <div class="fleet-card-img-wrap">
+                                        <i class="fa-solid fa-flask-vial fleet-card-icon-render text-cyan"></i>
+                                    </div>
+                                    <div class="fleet-card-label">Sensor Probe Stems</div>
+                                </div>
+
+                                <!-- Capsule 4: Actuator Hub -->
+                                <div class="spatial-fleet-card" title="Automated Neutralizer Reactor">
+                                    <div class="fleet-card-img-wrap">
+                                        <i class="fa-solid fa-fan fleet-card-icon-render text-indigo"></i>
+                                    </div>
+                                    <div class="fleet-card-label">Neutralizer Actuator</div>
+                                </div>
                             </div>
                         </div>
+
+                    </div>
 
                         <!-- Contamination Alert Banner (Upgrade 4) -->
                         <div id="contamination-alert" class="glass-card full-width alert-banner"
@@ -282,6 +522,35 @@
                                     <span class="unit">°C</span>
                                 </div>
                                 <div class="sensor-label">Temperature</div>
+                            </div>
+                        </section>
+                        
+                        <!-- Spatial Catchment Radar Mini-Card -->
+                        <section class="glass-card full-width" style="margin-bottom: 2rem; padding: 1.25rem 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-satellite-dish text-blue"></i> Spatial Water Catchment Radar
+                                        <span class="live-badge" style="font-size: 0.65rem; padding: 2px 8px;"><span class="badge-ping"></span> GIS ACTIVE</span>
+                                    </h3>
+                                    <p class="subtitle" style="margin: 0; font-size: 0.8rem;">Regional multi-hub surveillance mesh surrounding the active Jellyfish Probe</p>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                                    <div class="map-btn-group" style="margin: 0;">
+                                        <button class="btn btn-sm active" id="btn-mini-basemap-dark" style="padding: 0.35rem 0.65rem; font-size: 0.72rem;"><i class="fa-solid fa-moon"></i> Dark</button>
+                                        <button class="btn btn-sm" id="btn-mini-basemap-satellite" style="padding: 0.35rem 0.65rem; font-size: 0.72rem;"><i class="fa-solid fa-satellite"></i> Satellite</button>
+                                        <button class="btn btn-sm" id="btn-mini-basemap-topo" style="padding: 0.35rem 0.65rem; font-size: 0.72rem;"><i class="fa-solid fa-map"></i> Streets</button>
+                                    </div>
+                                    <button class="btn" id="btn-mini-focus-probe" style="background: rgba(255,255,255,0.06); font-size: 0.78rem; padding: 0.45rem 0.85rem; border: 1px solid var(--border-color);">
+                                        <i class="fa-solid fa-crosshairs text-cyan"></i> Focus Probe
+                                    </button>
+                                    <button class="btn btn-primary" id="btn-open-full-gov-map" style="background: linear-gradient(135deg, var(--accent-blue), #1d4ed8); font-size: 0.78rem; padding: 0.45rem 0.95rem; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.35);">
+                                        <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Expand Full GIS Console
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mini-radar-container">
+                                <div id="mini-hub-map" style="width: 100%; height: 100%;"></div>
                             </div>
                         </section>
 
@@ -576,15 +845,52 @@
                                 </div>
                             </div>
 
-                            <!-- Map Visualization -->
-                            <div class="glass-card"
-                                style="padding: 0; overflow: hidden; height: 400px; display: flex; flex-direction: column;">
-                                <div class="card-header"
-                                    style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2);">
-                                    <i class="fa-solid fa-satellite-dish text-blue"></i>
-                                    <h3 style="margin:0;">Regional Monitoring Network</h3>
+                            <!-- Spatial GIS Command Console -->
+                            <div class="glass-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; border-color: rgba(6, 182, 212, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+                                <div class="card-header" style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); background: rgba(8, 14, 25, 0.85); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <i class="fa-solid fa-satellite-dish text-cyan fa-lg"></i>
+                                        <div>
+                                            <h3 style="margin:0; font-size: 1.05rem;">Spatial Regional Catchment Mesh</h3>
+                                            <span style="font-size: 0.72rem; color: var(--text-muted);">Bengaluru Water Basin — 15 Telemetry Hubs</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span class="live-badge" style="font-size: 0.7rem;"><span class="badge-ping"></span> GIS SURVEILLANCE</span>
+                                    </div>
                                 </div>
-                                <div id="hub-map" style="flex-grow: 1; width: 100%; z-index: 1;"></div>
+
+                                <!-- Spatial Map Control Bar -->
+                                <div class="map-control-bar">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                        <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Basemap:</span>
+                                        <div class="map-btn-group">
+                                            <button class="map-btn active" id="btn-basemap-dark" title="Dark Cyber Theme"><i class="fa-solid fa-moon"></i> Dark</button>
+                                            <button class="map-btn" id="btn-basemap-satellite" title="Esri World Imagery"><i class="fa-solid fa-earth-americas"></i> Satellite</button>
+                                            <button class="map-btn" id="btn-basemap-topo" title="Hydrological Topo"><i class="fa-solid fa-mountain"></i> Topo</button>
+                                        </div>
+                                        <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-left: 0.5rem;">Layers:</span>
+                                        <div class="map-btn-group">
+                                            <button class="map-btn active" id="btn-toggle-heat" title="Toggle Contamination Heatmap"><i class="fa-solid fa-fire text-orange"></i> Heatmap</button>
+                                            <button class="map-btn active" id="btn-toggle-flow" title="Toggle Hydraulic Drainage Vectors"><i class="fa-solid fa-water text-cyan"></i> Drainage</button>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                        <button class="map-btn" id="btn-fly-probe" title="Smoothly zoom to active Jellyfish Probe" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #fb7185;">
+                                            <i class="fa-solid fa-crosshairs"></i> Probe
+                                        </button>
+                                        <button class="map-btn" id="btn-fly-source" title="Fly to estimated contamination source" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;">
+                                            <i class="fa-solid fa-industry"></i> Source
+                                        </button>
+                                        <button class="map-btn" id="btn-fly-recenter" title="Recenter to regional view">
+                                            <i class="fa-solid fa-arrows-to-circle"></i> Extent
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="map-spatial-wrapper">
+                                    <div id="hub-map" style="width: 100%; height: 100%; z-index: 1;"></div>
+                                </div>
                             </div>
 
                             <!-- Simulation Trigger -->
@@ -740,15 +1046,16 @@
                 </div> <!-- END SETTINGS VIEW -->
 
             </div> <!-- END VIEW-CONTAINER -->
-        </main>
-    </div> <!-- END APP-CONTAINER -->
+        </div> <!-- END SPATIAL-BODY-CONTAINER -->
+    </div> <!-- END SPATIAL-WINDOW-CHASSIS -->
 
-    <!-- Leaflet JS -->
+    <!-- Leaflet JS & Heatmap Plugin -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     <!-- Export Script via JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js?v=2.0"></script>
+    <script src="script.js?v=2.1"></script>
 </body>
 
 </html>

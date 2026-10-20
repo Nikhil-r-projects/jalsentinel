@@ -1,26 +1,40 @@
 import os
 import numpy as np
-import tensorflow as tf
 import joblib
+
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
 
 model = None
 scaler = None
 
 def load_model():
     global model, scaler
+    if tf is None:
+        print("Note: TensorFlow is not installed. DL model (LSTM) disabled; ML models will run normally.")
+        return
+
     base_dir = os.path.dirname(__file__)
     model_path = os.path.join(base_dir, "..", "models", "lstm_model.keras")
     scaler_path = os.path.join(base_dir, "..", "models", "scaler.pkl")
     
     if os.path.exists(model_path):
         tf.get_logger().setLevel('ERROR')
-        model = tf.keras.models.load_model(model_path)
-        print("DL Model (lstm_model.keras) loaded successfully.")
+        try:
+            model = tf.keras.models.load_model(model_path)
+            print("DL Model (lstm_model.keras) loaded successfully.")
+        except Exception as e:
+            print(f"Warning: Could not load DL model: {e}")
     else:
         print(f"Warning: DL model not found at {model_path}.")
         
     if os.path.exists(scaler_path):
-        scaler = joblib.load(scaler_path)
+        try:
+            scaler = joblib.load(scaler_path)
+        except Exception as e:
+            print(f"Warning: Could not load scaler: {e}")
     else:
         print(f"Warning: Scaler not found at {scaler_path}.")
 
@@ -63,6 +77,9 @@ def predict_spike(raw_buffer):
 
 def retrain_lstm():
     global model, scaler
+    if tf is None:
+        print("TensorFlow is not installed. Skipping LSTM retraining.")
+        return False
     import pandas as pd
     from sklearn.preprocessing import MinMaxScaler
     

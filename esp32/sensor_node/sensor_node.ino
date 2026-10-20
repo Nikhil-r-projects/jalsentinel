@@ -28,14 +28,16 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <DHT.h>
+#include "esp_wifi.h"
 
 // ─── WiFi Credentials ───────────────────────────────────────
 // UPDATE THESE before uploading!
-const char* WIFI_SSID     = "Unknown";
-const char* WIFI_PASSWORD = "myname.1";
+const char* WIFI_SSID     = "Nikhil ";
+const char* WIFI_PASSWORD = "00000000";
 
 // ─── Server Endpoint ────────────────────────────────────────
-const char* SERVER_URL = "http://172.28.234.241:5000/sensor-data";
+// Set this to your computer's local IP running server/app.py (found via 'ipconfig')
+const char* SERVER_URL = "http://10.47.212.117:5000/sensor-data";
 
 // ─── Sensor Pin Definitions ─────────────────────────────────
 // Note: Use ADC1 pins only (GPIO 32-39) since WiFi uses ADC2
@@ -49,13 +51,18 @@ const char* SERVER_URL = "http://172.28.234.241:5000/sensor-data";
 DHT dht(DHT_PIN, DHTTYPE);
 
 // ─── Calibration Constants ──────────────────────────────────
-// Adjust these based on your specific sensor calibration
-const float PH_OFFSET     = 0.0;   // pH calibration offset
-const float PH_SLOPE      = 3.5;   // pH voltage-to-pH multiplier
-const float TDS_FACTOR    = 0.5;   // TDS raw-to-ppm factor
-const float TURB_FACTOR   = 0.1;   // Turbidity raw-to-NTU factor
-const float VREF          = 3.3;   // ESP32 ADC reference voltage
+// Adjust these based on your specific sensor hardware
+const float VREF          = 3.3;    // ESP32 ADC reference voltage
 const float ADC_MAX       = 4095.0; // 12-bit ADC resolution
+
+// pH Calibration: In neutral buffer (pH 7.0), module should output ~2.5V (adjusted via trimpot)
+const float PH_V_NEUTRAL  = 2.50;   // Neutral reference voltage at pH 7.0
+const float PH_SLOPE      = -3.5;   // Negative slope for inverting amplifier
+
+// TDS Calibration: Enable INVERT_TDS_RESPONSE if your module drops voltage in contaminated water
+const bool  INVERT_TDS_RESPONSE = true;  
+const float TDS_FACTOR          = 0.5;   
+const float TURB_FACTOR         = 0.1;   // Turbidity raw-to-NTU factor
 
 // ─── Timing ─────────────────────────────────────────────────
 const unsigned long SEND_INTERVAL = 5000; // Send data every 5 seconds
@@ -63,27 +70,45 @@ unsigned long lastSendTime = 0;
 
 // ─── Read pH Sensor ─────────────────────────────────────────
 float readPH() {
-  // Take multiple readings and average for stability
   long sum = 0;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 20; i++) {
     sum += analogRead(PH_PIN);
-    delay(10);
+    delay(5);
   }
-  float avgRaw = sum / 10.0;
+  float avgRaw = sum / 20.0;
   float voltage = avgRaw * (VREF / ADC_MAX);
-  float ph = voltage * PH_SLOPE + PH_OFFSET;
+  
+  // Standard inverting op-amp formula with neutral calibration offset
+  float ph = 7.0 + ((PH_V_NEUTRAL - voltage) * PH_SLOPE);
+  ph = constrain(ph, 0.0, 14.0);
   return ph;
 }
 
 // ─── Read TDS Sensor ────────────────────────────────────────
-float readTDS() {
+float readTDS(float temperature) {
   long sum = 0;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 20; i++) {
     sum += analogRead(TDS_PIN);
-    delay(10);
+    delay(5);
   }
-  float avgRaw = sum / 10.0;
-  float tds = avgRaw * TDS_FACTOR;
+  float avgRaw = sum / 20.0;
+  float voltage = avgRaw * (VREF / ADC_MAX);
+
+  // If the module outputs higher voltage for higher resistance (clean water):
+  if (INVERT_TDS_RESPONSE) {
+    voltage = VREF - voltage;
+    if (voltage < 0) voltage = 0;
+  }
+
+  // Temperature compensation formula (standard Gravity TDS curve)
+  float compCoeff = 1.0 + 0.02 * (temperature - 25.0);
+  float compVolt  = voltage / compCoeff;
+
+  // 3rd order polynomial curve for TDS in PPM
+  float tds = (133.42 * compVolt * compVolt * compVolt 
+             - 255.86 * compVolt * compVolt 
+             + 857.39 * compVolt) * TDS_FACTOR;
+  if (tds < 0) tds = 0;
   return tds;
 }
 
@@ -125,14 +150,49 @@ void setup() {
 
   // Connect to WiFi
   WiFi.mode(WIFI_STA);
+  esp_wifi_start();
+
+  // Set country to India (enables channels 1-13)
+  wifi_country_t country = {
+    .cc = "IN",
+    .schan = 1,
+    .nchan = 13,
+    .max_tx_power = 20,
+    .policy = WIFI_COUNTRY_POLICY_AUTO
+  };
+  esp_wifi_set_country(&country);
+
+  // Scan and list visible networks for diagnostics
+  Serial.println("[Sensor] Scanning 2.4 GHz Wi-Fi channels...");
+  int n = WiFi.scanNetworks();
+  Serial.printf("[Sensor] Found %d networks:\n", n);
+  for (int i = 0; i < n; i++) {
+    Serial.printf("  [%d] SSID: '%s' | Ch: %d | RSSI: %d dBm\n", i, WiFi.SSID(i).c_str(), WiFi.channel(i), WiFi.RSSI(i));
+  }
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("[Sensor] Connecting to WiFi");
 
   int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 40) {
+  while (WiFi.status() != WL_CONNECTED && attempts < 25) {
     delay(500);
     Serial.print(".");
     attempts++;
+  }
+
+  // If failed, try with trailing space (common on mobile hotspots)
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println();
+    Serial.print("[Sensor] Retrying with SSID 'Nikhil ' (trailing space)...");
+    WiFi.disconnect();
+    delay(500);
+    WiFi.begin("Nikhil ", WIFI_PASSWORD);
+    attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 25) {
+      delay(500);
+      Serial.print(".");
+      attempts++;
+    }
   }
 
   if (WiFi.status() == WL_CONNECTED) {
@@ -143,7 +203,8 @@ void setup() {
   } else {
     Serial.println();
     Serial.println("[Sensor] ERROR: WiFi connection failed!");
-    Serial.println("[Sensor] Will retry in loop...");
+    Serial.println("[Sensor] NOTE: If hotspot uses WPA3-Personal, change hotspot Security to WPA2-Personal!");
+    Serial.println("[Sensor] Will wait for connection...");
   }
 
   Serial.println("[Sensor] Server URL: " + String(SERVER_URL));
@@ -165,18 +226,16 @@ void loop() {
 
   // Check WiFi connection
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("[Sensor] WiFi disconnected! Reconnecting...");
-    WiFi.disconnect();
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.println("[Sensor] Waiting for WiFi connection...");
     delay(3000);
     return;
   }
 
   // ─── Read all sensors ───────────────────────────────────
-  float ph          = readPH();
-  float tds         = readTDS();
-  float turbidity   = readTurbidity();
   float temperature = readTemperature();
+  float ph          = readPH();
+  float tds         = readTDS(temperature);
+  float turbidity   = readTurbidity();
 
   // ─── Build JSON payload ─────────────────────────────────
   String payload = "{";
